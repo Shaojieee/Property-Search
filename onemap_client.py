@@ -2,6 +2,8 @@ from requests_toolbelt.multipart.encoder import MultipartEncoder
 import time
 import requests
 import json
+import asyncio
+from aiohttp import ClientSession
 
 class OneMapClient():
     def __init__(self, email, password):
@@ -81,6 +83,33 @@ class OneMapClient():
         except Exception as e:
             print(e)
             return
+        
+    async def async_search(self, search_val, session, return_geom=True, get_addr_details=True, page_num=1):
+        '''API Documentation: https://docs.onemap.sg/#search'''
+        try:
+            if return_geom:
+                return_geom = "Y"
+            else:
+                return_geom = "N"
+
+            if get_addr_details:
+                get_addr_details = "Y"
+            else:
+                get_addr_details = "N"
+
+            params = {
+                'searchVal': search_val,
+                'returnGeom': return_geom,
+                'getAddrDetails': get_addr_details,
+                'pageNum': page_num
+            }
+            async with session.get(self.url_base + "/api/common/elastic/search", params=params) as response:
+                response =  await response.text()
+                response = json.loads(response)
+                response['search_phrase'] = search_val
+                return response
+        except Exception as e:
+            return {'error': e}
 
     def reverse_geocode_SVY21(self, coordinates, buffer=10, address_type="All", other_features=False):
         '''API Documentation: https://docs.onemap.sg/#reverse-geocode-svy21'''
