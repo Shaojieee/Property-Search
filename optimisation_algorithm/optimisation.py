@@ -23,11 +23,12 @@ def cost_fn(time, freq):
 
 
 def get_travelling_time(start, end, client):
-    journey = client.get_route(start, end, route_type='drive')
-    if 'route_summary' not in journey:
-        print(journey)
+    while True:
+        journey = client.get_route(start, end, route_type='drive')
+        if 'route_summary' in journey:
+            return journey['route_summary']['total_time']/60/60, journey['route_summary']['total_distance']
 
-    return journey['route_summary']['total_time']/60/60, journey['route_summary']['total_distance']
+    
 
 
 # Get weighted mid point. Weighted by travelling frequency
@@ -55,7 +56,7 @@ def objective_func(locations, cur):
 # Return the resultant cost direction in degrees.
 def get_direction(ind_costs, origin):
     locations = list(ind_costs.keys())
-    costs = np.array([ind_costs[x] for x in locations]).reshape(3,1)
+    costs = np.array([ind_costs[x] for x in locations]).reshape(len(locations),1)
     locations = np.array(locations)
     origin = np.array(origin)
 
@@ -65,7 +66,7 @@ def get_direction(ind_costs, origin):
         fwd_azimuth,back_azimuth,distance = geodesic.inv(origin[1], origin[0], location[1], location[0])
         bearings.append(fwd_azimuth)
 
-    bearings = np.array(bearings).reshape(3,1)
+    bearings = np.array(bearings).reshape(len(locations),1)
     # print(bearings)
     v_cost_vectors =  costs * np.cos(bearings*np.pi/180)
     # print(v_cost_vectors)
@@ -89,7 +90,6 @@ def get_direction(ind_costs, origin):
         else:
             return 180+resultant_bearing
         
-
 
 def update_point(cur, bearings, distance_to_move_km=2):
     geodesic = pyproj.Geod(ellps='WGS84')
@@ -125,3 +125,16 @@ def optimise(locations, iterations=10):
     best_point = results['coor'][lowest_cost_idx]
     return best_point, results
 
+
+def get_properties_distance(best_location, properties_file):
+    properties = pd.read_csv(properties_file)
+
+    properties = properties[(properties['latitude'].notna()) & (properties['longitude'].notna())]
+
+    properties['distance'] = None 
+
+    geodesic = pyproj.Geod(ellps='WGS84')
+    for i, row in properties.iterrows():
+        properties.at[i,'distance'] = geodesic.inv(best_location[1], best_location[0], row['longitude'], row['latitude'])[2]
+
+    return properties

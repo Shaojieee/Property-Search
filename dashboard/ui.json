@@ -98,11 +98,11 @@
             "id": "5knmp2jc0mtzy0ke",
             "type": "column",
             "content": {
-                "width": "1"
+                "width": "1",
+                "isSticky": ""
             },
             "parentId": "7cku4rcubyddhrzd",
             "position": 0,
-            "handlers": {},
             "visible": true
         },
         "7iahpamqog8z9jow": {
@@ -121,59 +121,10 @@
             "type": "html",
             "content": {
                 "styles": "{\n  \"padding\": \"16px\",\n  \"min-height\": \"64px\",\n  \"min-width\": \"64px\",\n  \"border-radius\": \"8px\",\n  \"background\": \"linear-gradient(90deg, rgba(41,207,0,1) 0%, rgba(145,231,78,1) 100%)\"\n}",
-                "htmlInside": "@{map_html}"
+                "htmlInside": "@{map_html}\n<script>\n$(document).ready(function(){\n   $(\"#parentDiv\").on('click', function(){\n       console.log(\"Parent div clicked.\");\n   });\n});\n</script>"
             },
             "parentId": "7iahpamqog8z9jow",
             "position": 0,
-            "handlers": {},
-            "visible": true
-        },
-        "q7olhth1ewkhdr4w": {
-            "id": "q7olhth1ewkhdr4w",
-            "type": "repeater",
-            "content": {
-                "keyVariable": "itemId",
-                "valueVariable": "item"
-            },
-            "parentId": "5hket2v8323xioyc",
-            "position": 1,
-            "handlers": {},
-            "visible": true
-        },
-        "vj7yds35du99xp3p": {
-            "id": "vj7yds35du99xp3p",
-            "type": "textinput",
-            "content": {
-                "label": "Location"
-            },
-            "parentId": "q7olhth1ewkhdr4w",
-            "position": 0,
-            "handlers": {},
-            "visible": true
-        },
-        "7v6160vbyfqjjc5y": {
-            "id": "7v6160vbyfqjjc5y",
-            "type": "dropdowninput",
-            "content": {
-                "label": "Travel Type"
-            },
-            "parentId": "q7olhth1ewkhdr4w",
-            "position": 1,
-            "handlers": {},
-            "visible": true
-        },
-        "5dgs3gni6q1tez6n": {
-            "id": "5dgs3gni6q1tez6n",
-            "type": "sliderinput",
-            "content": {
-                "label": "Price Range",
-                "minValue": "0",
-                "maxValue": "100",
-                "stepSize": "1"
-            },
-            "parentId": "5hket2v8323xioyc",
-            "position": 0,
-            "handlers": {},
             "visible": true
         },
         "5hket2v8323xioyc": {
@@ -181,22 +132,32 @@
             "type": "horizontalstack",
             "content": {},
             "parentId": "5knmp2jc0mtzy0ke",
-            "position": 1,
+            "position": 0,
             "handlers": {},
             "visible": true
         },
-        "6v88eeiuhhe7g99k": {
-            "id": "6v88eeiuhhe7g99k",
-            "type": "button",
+        "77sfofwja9acvcfa": {
+            "id": "77sfofwja9acvcfa",
+            "type": "textinput",
             "parentId": "5hket2v8323xioyc",
             "content": {
-                "text": "Button Text"
+                "label": "Address"
             },
-            "handlers": {
-                "ss-click": "place_marker_1"
-            },
-            "position": 2,
+            "handlers": {},
+            "position": 0,
             "visible": true
+        },
+        "c24dt1roebpph0ny": {
+            "id": "c24dt1roebpph0ny",
+            "type": "dropdowninput",
+            "parentId": "5knmp2jc0mtzy0ke",
+            "content": {
+                "label": "Travel Type",
+                "options": "{\n  \"drive\": \"Drive\"\n}",
+                "cssClasses": "width"
+            },
+            "handlers": {},
+            "position": 1
         }
     }
 }

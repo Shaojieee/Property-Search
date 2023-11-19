@@ -2,8 +2,6 @@ from requests_toolbelt.multipart.encoder import MultipartEncoder
 import time
 import requests
 import json
-import asyncio
-from aiohttp import ClientSession
 
 class OneMapClient():
     def __init__(self, email, password):
