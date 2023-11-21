@@ -63,6 +63,16 @@ def section_1():
                     icon=folium.Icon(color='red')
                 )
             )
+        
+        for added_location in st.session_state['search_locations']:
+            search_fg.add_child(
+                folium.Marker(
+                    location=added_location['coor'],
+                    tooltip=added_location['name'],
+                    icon=folium.Icon(color='green')
+                )
+            )
+
 
         search_map = st_folium(
             map,
@@ -155,8 +165,8 @@ def section_1():
                 ),
             }
         )
-
-        if st.button(label='Delete Selected Place', use_container_width=True, disabled=len(st.session_state['search_locations'])==0):
+        selected_locations = [x for x in data if x['selected']==True]
+        if st.button(label='Delete Selected Place', use_container_width=True, disabled=len(selected_locations)==0):
             new_data = [x for x in data if x['selected']==False]
             st.session_state['search_locations'] = new_data
             st.rerun()
