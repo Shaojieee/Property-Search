@@ -22,11 +22,25 @@ def cost_fn(time, freq):
     return np.exp(time)*freq
 
 
-def get_travelling_time(start, end, client):
+def get_travelling_time(start, end, travel_mode, client):
     while True:
-        journey = client.get_route(start, end, route_type='drive')
-        if 'route_summary' in journey:
-            return journey['route_summary']['total_time']/60/60, journey['route_summary']['total_distance']
+        if travel_mode=='pt':
+            journey = client.get_public_transport_route(
+                start, 
+                end, 
+                date='01-14-2023',
+                time='13:00:00',
+                mode='TRANSIT',
+            )
+            # TODO: Calculate distance
+
+            if 'plan' in journey:
+                return (journey['plan']['itineraries'][0]['walkTime'] + journey['plan']['itineraries'][0]['transitTime'])/60/60, 0
+        else:
+            journey = client.get_route(start, end, route_type=travel_mode)
+
+            if 'route_summary' in journey:
+                return journey['route_summary']['total_time']/60/60, journey['route_summary']['total_distance']
 
     
 
@@ -45,7 +59,8 @@ def objective_func(locations, cur):
     for location in locations:
         coor = location['coor']
         freq = location['freq']
-        time, distance = get_travelling_time(coor, cur, Client)
+        travel_mode = location['travel_type']
+        time, distance = get_travelling_time(coor, cur, travel_mode, Client)
         cost = cost_fn(time,freq)
         total_cost += cost
         individual_costs[tuple(coor)] = cost

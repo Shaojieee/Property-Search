@@ -587,8 +587,7 @@ class OneMapClient():
         try:
             start_coordinates = "{},{}".format(start_coordinates[0], start_coordinates[1])
             end_coordinates = "{},{}".format(end_coordinates[0], end_coordinates[1])
-
-            return json.loads(requests.get(self.url_base + "/privateapi/routingsvc/route",
+            resp = requests.get(self.url_base + "/api/public/routingsvc/route",
                                            params={'start': start_coordinates,
                                                    'end': end_coordinates,
                                                    'routeType': 'pt',
@@ -596,8 +595,9 @@ class OneMapClient():
                                                    'time': time,
                                                    'mode': mode,
                                                    'maxWalkDistance': max_walk_distance,
-                                                   'numItneraries': num_itineraries},
-                                           headers={'Authorization': self.token}).text)
+                                                   'numItineraries': num_itineraries},
+                                           headers={'Authorization': self.token})
+            return json.loads(resp.text)
 
         except Exception as e:
             print(e)
