@@ -7,6 +7,8 @@ import numpy as np
 from onemap_client import OneMapClient
 import pyproj
 
+import asyncio
+import aiohttp
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -130,8 +132,8 @@ def optimise(locations, iterations=10):
             lowest_cost = costs
         else:
             early_stop_count+=1
-        if early_stop_count==5:
-            break
+        # if early_stop_count==5:
+        #     break
 
         update_bearings = get_direction(ind_costs, point)
         point = update_point(point, update_bearings)
@@ -139,6 +141,8 @@ def optimise(locations, iterations=10):
     lowest_cost_idx = np.argmin(results['total_cost'])
     best_point = results['coor'][lowest_cost_idx]
     return best_point, results
+
+
 
 
 def get_properties_distance(best_location, properties_file):
@@ -153,3 +157,20 @@ def get_properties_distance(best_location, properties_file):
         properties.at[i,'distance'] = geodesic.inv(best_location[1], best_location[0], row['longitude'], row['latitude'])[2]
 
     return properties
+
+
+if __name__=='__main__':
+    locations = [
+        # Changi Airport
+        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 1, 'travel_type': 'drive'},
+        # Murai Camp
+        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 7, 'travel_type': 'drive'},
+        # Clarke Quay
+        {'coor': [1.2929040296020744, 103.84729261914465], 'freq': 7, 'travel_type': 'drive'}
+    ]
+    import time 
+    start = time.time()
+    optimise(locations)
+    end = time.time()
+
+    print(f'Time taken:{end-start}')

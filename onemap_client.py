@@ -579,6 +579,32 @@ class OneMapClient():
         except Exception as e:
             print(e)
             return
+    
+    async def async_get_route(self, start_coordinates, end_coordinates, route_type, session):
+        '''API Documentation: https://docs.onemap.sg/#route'''
+        # self.check_expired_and_refresh_token()[0]
+
+        try:
+            start_coordinates = "{},{}".format(start_coordinates[0], start_coordinates[1])
+            end_coordinates = "{},{}".format(end_coordinates[0], end_coordinates[1])
+            params = {
+                'start': start_coordinates,
+                'end': end_coordinates,
+                'routeType': route_type
+            }
+            headers={
+                'Authorization': self.token
+            }
+            async with session.get(self.url_base + "/api/public/routingsvc/route", params=params, headers=headers) as response:
+                response =  await response.text()
+                response = json.loads(response)
+                response['start'] = start_coordinates
+                response['end'] = end_coordinates
+                response['travel_type'] = route_type
+                return response
+        except Exception as e:
+            # print(e)
+            return
 
     def get_public_transport_route(self, start_coordinates, end_coordinates, date, time, mode, max_walk_distance=None, num_itineraries=1):
         '''API Documentation: https://docs.onemap.sg/#route'''
@@ -599,6 +625,37 @@ class OneMapClient():
                                            headers={'Authorization': self.token})
             return json.loads(resp.text)
 
+        except Exception as e:
+            print(e)
+            return
+    
+    async def async_get_public_transport_route(self, start_coordinates, end_coordinates, date, time, mode, session, max_walk_distance=None, num_itineraries=1):
+        '''API Documentation: https://docs.onemap.sg/#route'''
+        # self.check_expired_and_refresh_token()[0]
+
+        try:
+            start_coordinates = "{},{}".format(start_coordinates[0], start_coordinates[1])
+            end_coordinates = "{},{}".format(end_coordinates[0], end_coordinates[1])
+            params = {
+                'start': start_coordinates,
+                'end': end_coordinates,
+                'routeType': 'pt',
+                'date': date,
+                'time': time,
+                'mode': mode,
+                'maxWalkDistance': max_walk_distance,
+                'numItineraries': num_itineraries
+            }
+            headers={
+                'Authorization': self.token
+            }
+            async with session.get(self.url_base + "/api/public/routingsvc/route", params=params, headers=headers) as response:
+                response =  await response.text()
+                response = json.loads(response)
+                response['start'] = start_coordinates
+                response['end'] = end_coordinates
+                response['travel_type'] = 'pt'
+                return response
         except Exception as e:
             print(e)
             return
