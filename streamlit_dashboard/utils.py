@@ -28,9 +28,9 @@ def log_optimisation_run():
     conn = psycopg2.connect(
         host=os.environ['POSTGRES_HOST'],
         port=os.environ['POSTGRES_PORT'],
-        database=os.environ['POSTGRES_DB'],
-        user=os.environ['POSTGRES_USER'],
-        password=os.environ['POSTGRES_PASSWORD']
+        database=os.environ['OLTP_DB'],
+        user=os.environ['OLTP_USER'],
+        password=os.environ['OLTP_PASSWORD']
     )
 
     conn.autocommit = True
@@ -46,10 +46,11 @@ def log_optimisation_run():
     for row in st.session_state['locations']:
         cursor.execute(f"""
             INSERT INTO locations 
-            (runs_id, lat, long, travel_type, frequency)
+            (runs_id, name, lat, long, travel_type, frequency)
             VALUES
-            ({id}, {row['coor'][0]}, {row['coor'][1]}, '{row['travel_type']}', {row['freq']});
+            ({id}, '{row['name']}', {row['coor'][0]}, {row['coor'][1]}, '{row['travel_type']}', {row['freq']});
         """)
+
 
 def optimise():
 
