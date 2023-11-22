@@ -195,6 +195,8 @@ def async_optimise(locations, iterations=10, num_points=1):
         results['total_time']+=total_time.tolist()
     
     print(results)
+    # TODO: Get best results
+    return search_locations, results
 
         
 
