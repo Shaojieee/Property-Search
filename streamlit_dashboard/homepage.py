@@ -10,13 +10,10 @@ from section_2 import section_2
 from section_1_instruction import section_1_instruction
 from section_2_instruction import section_2_instruction
 
-import psycopg2
 from dotenv import load_dotenv
 load_dotenv()
 
 st.set_page_config(layout='wide')
-
-
 
 section_1_instruction()
 section_1()

@@ -3,6 +3,7 @@ import folium
 from streamlit_folium import st_folium
 import polyline
 from streamlit_option_menu import option_menu
+import math
 
 import ast
 import sys
@@ -184,15 +185,16 @@ def section_2():
 
 
     to_print_details = filter_properties[(filter_properties['latitude']==st.session_state['selected_lat_lng']['lat']) & (filter_properties['longitude']==st.session_state['selected_lat_lng']['lng'])]
+    st.header('Listings Available')
+    if len(to_print_details)==0:
+        st.markdown('#### Select a grey marker on the map to view listings!')
     if len(to_print_details)>0:
-        st.header('Listings Available')
-
-
+        st.markdown('#### Below are the available listings at the green marker selected on the map!')
         selection_col, detail_col = st.columns((1,3))
         
         names = []
         for i, row in to_print_details.iterrows():
-            names.append(row['name'])
+            names.append(row['name']+' - '+str(row['id']))
         
         with selection_col:
             property_detail_selected = option_menu(
@@ -204,21 +206,31 @@ def section_2():
                     'container': {'height':'500px', 'overflow-y':'auto'}
                 }
             )
+        
         with detail_col:
             st.write()
-            details = to_print_details.loc[to_print_details['name']==property_detail_selected].iloc[0]
+            property_name_selected, property_id_selected = property_detail_selected.split(' - ')
+            details = to_print_details.loc[to_print_details['id']==int(property_id_selected)].iloc[0]
             st.header(details['name'])
             st.subheader('URL')
-            st.write(row['url'])
+            st.write(details['url'])
+
+            
             st.subheader('Address')
-            st.write(row['address'])
-            st.subheader('Price')
-            st.write('$'+str(row['price']))
-            st.subheader('Cost psf')
-            st.write('$'+str(row['cost_psf']))
-            st.subheader('Floor Area')
-            st.write(str(int(row['floor_area'])))
-            st.subheader('\# of bedrooms')
-            st.write(str(int(row['num_bedroom'])))
-            st.subheader('\# of bathrooms')
-            st.write(str(int(row['num_bathroom'])))
+            st.write(details['address'])
+            price_col, area_col, room_col = st.columns(3)
+            with price_col:
+                st.subheader('Price')
+                st.write('$'+f"{details['price']:,.2f}" if not math.isnan(details['price']) else 'Not Available')
+                st.subheader('Cost psf')
+                st.write('$'+ f"{details['cost_psf']:,.2f}" if not math.isnan(details['cost_psf']) else 'Not Available')
+            with area_col:
+                st.subheader('Floor Area')
+                st.write(f"{int(details['floor_area']):,d}" if not math.isnan(details['floor_area']) else 'Not Available')
+                st.subheader('Land Area')
+                st.write(f"{int(details['land_area']):,d}" if not math.isnan(details['land_area']) else 'Not Available')
+            with room_col:
+                st.subheader('\# of bedrooms')
+                st.write(str(int(details['num_bedroom'])) if not math.isnan(details['num_bedroom']) else 'Not Available')
+                st.subheader('\# of bathrooms')
+                st.write(str(int(details['num_bathroom'])) if not math.isnan(details['num_bathroom']) else 'Not Available')

@@ -7,6 +7,7 @@ import os
 import sys
 sys.path.append('./')
 from optimisation_algorithm import optimisation as op
+from optimisation_algorithm import async_optimisation as async_op
 from onemap_client import OneMapClient
 
 from dotenv import load_dotenv
@@ -24,39 +25,45 @@ def generate_map():
 
 
 def log_optimisation_run():
+    try:
+        conn = psycopg2.connect(
+            host=os.environ['POSTGRES_HOST'],
+            port=os.environ['POSTGRES_PORT'],
+            database=os.environ['OLTP_DB'],
+            user=os.environ['OLTP_USER'],
+            password=os.environ['OLTP_PASSWORD']
+        )
 
-    conn = psycopg2.connect(
-        host=os.environ['POSTGRES_HOST'],
-        port=os.environ['POSTGRES_PORT'],
-        database=os.environ['OLTP_DB'],
-        user=os.environ['OLTP_USER'],
-        password=os.environ['OLTP_PASSWORD']
-    )
-
-    conn.autocommit = True
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO public.logs
-        (id, run_time)
-        VALUES(DEFAULT, CURRENT_TIMESTAMP) RETURNING id;
-    """)
-
-    id = cursor.fetchone()[0]
-
-    for row in st.session_state['locations']:
-        cursor.execute(f"""
-            INSERT INTO locations 
-            (runs_id, name, lat, long, travel_type, frequency)
-            VALUES
-            ({id}, '{row['name']}', {row['coor'][0]}, {row['coor'][1]}, '{row['travel_type']}', {row['freq']});
+        conn.autocommit = True
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO public.logs
+            (id, run_time)
+            VALUES(DEFAULT, CURRENT_TIMESTAMP) RETURNING id;
         """)
 
+        id = cursor.fetchone()[0]
 
-def optimise():
+        for row in st.session_state['locations']:
+            cursor.execute(f"""
+                INSERT INTO locations 
+                (runs_id, name, lat, long, travel_type, frequency)
+                VALUES
+                ({id}, '{row['name']}', {row['coor'][0]}, {row['coor'][1]}, '{row['travel_type']}', {row['freq']});
+            """)
+    except psycopg2.OperationalError as ex:
+        if 'Connection refused' not in str(ex):
+            print(ex)
+
+
+
+def optimise(run_async=True):
 
     st.session_state['locations'] = st.session_state['search_locations']
-
-    best_location, results = op.optimise(st.session_state['locations'])  
+    if run_async:
+        best_location, results = async_op.async_optimise(st.session_state['locations'], iterations=5, num_points=4)
+    else:
+        best_location, results = op.optimise(st.session_state['locations'])  
     st.session_state['best_location'] = [best_location]
     
     st.session_state['properties'] = op.get_properties_distance(best_location, './final.csv')
@@ -95,54 +102,58 @@ def get_route(
         lat2, long2,
         travel_type
 ):  
-    input_key = tuple([lat1, long1, lat2, long2, travel_type])
-    if 'property_route' not in st.session_state:
-        st.session_state['property_route'] = {}
-    
-    if input_key in st.session_state['property_route']:
-        return st.session_state['property_route'][input_key]
-    
-    email = os.environ['ONE_MAP_API_EMAIL']
-    password = os.environ['ONE_MAP_API_PASSWORD']
+    while True:
+        try:
+            input_key = tuple([lat1, long1, lat2, long2, travel_type])
+            if 'property_route' not in st.session_state:
+                st.session_state['property_route'] = {}
+            
+            if input_key in st.session_state['property_route']:
+                return st.session_state['property_route'][input_key]
+            
+            email = os.environ['ONE_MAP_API_EMAIL']
+            password = os.environ['ONE_MAP_API_PASSWORD']
 
-    client = OneMapClient(email, password)
-    client.get_token()
-    if travel_type=='drive' or travel_type=='walk':
-    
-        resp = client.get_route(
-            start_coordinates=(lat1, long1),
-            end_coordinates=(lat2, long2),
-            route_type=travel_type
-        )
+            client = OneMapClient(email, password)
+            client.get_token()
+            if travel_type=='drive' or travel_type=='walk':
+            
+                resp = client.get_route(
+                    start_coordinates=(lat1, long1),
+                    end_coordinates=(lat2, long2),
+                    route_type=travel_type
+                )
 
-        resp['total_time'] = resp['route_summary']['total_time']
-        resp['total_distance'] = resp['route_summary']['total_distance']
+                resp['total_time'] = resp['route_summary']['total_time']
+                resp['total_distance'] = resp['route_summary']['total_distance']
 
-        st.session_state['property_route'][input_key] = resp
+                st.session_state['property_route'][input_key] = resp
 
-        return resp
-    elif travel_type=='pt':
-        resp = client.get_public_transport_route(
-            (lat1, long1), 
-            (lat2, long2), 
-            date='01-14-2023',
-            time='13:00:00',
-            mode='TRANSIT',
-        )
+                return resp
+            elif travel_type=='pt':
+                resp = client.get_public_transport_route(
+                    (lat1, long1), 
+                    (lat2, long2), 
+                    date='01-14-2023',
+                    time='13:00:00',
+                    mode='TRANSIT',
+                )
 
-        resp = resp['plan']['itineraries'][0]
-        resp['total_time'] = resp['walkTime'] + resp['transitTime']
+                resp = resp['plan']['itineraries'][0]
+                resp['total_time'] = resp['walkTime'] + resp['transitTime']
 
-        all_points = []
-        for leg in resp['legs']:
-            geometry = leg['legGeometry']['points']
-            points = polyline.decode(geometry)
+                all_points = []
+                for leg in resp['legs']:
+                    geometry = leg['legGeometry']['points']
+                    points = polyline.decode(geometry)
 
-            all_points += points
+                    all_points += points
 
-        resp['route_geometry'] = polyline.encode(all_points)
-        if resp!=None:
-            st.session_state['property_route'][input_key] = resp
+                resp['route_geometry'] = polyline.encode(all_points)
+                if resp!=None:
+                    st.session_state['property_route'][input_key] = resp
 
-        return resp
+                return resp
+        except:
+            print('Retrying')
     

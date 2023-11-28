@@ -164,9 +164,9 @@ if __name__=='__main__':
         # Changi Airport
         {'coor': [1.334961708552094, 103.96292017145929], 'freq': 1, 'travel_type': 'drive'},
         # Murai Camp
-        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 7, 'travel_type': 'drive'},
+        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 1, 'travel_type': 'drive'},
         # Clarke Quay
-        {'coor': [1.2929040296020744, 103.84729261914465], 'freq': 7, 'travel_type': 'drive'}
+        {'coor': [1.2929040296020744, 103.84729261914465], 'freq': 1, 'travel_type': 'drive'}
     ]
     import time 
     start = time.time()

@@ -35,7 +35,7 @@ def get_grid_points(mid_point, num_points):
 
     geodesic = pyproj.Geod(ellps='WGS84')
 
-    longs, lats, fwd_az = geodesic.fwd(lons=[mid_point[1]]*num_points, lats=[mid_point[0]]*num_points, az=bearings, dist=[5*1000]*num_points)
+    longs, lats, fwd_az = geodesic.fwd(lons=[mid_point[1]]*num_points, lats=[mid_point[0]]*num_points, az=bearings, dist=[3*1000]*num_points)
 
     longs.append(mid_point[1])
     lats.append(mid_point[0])
@@ -63,10 +63,11 @@ async def async_get_travelling_time(start, end, travel_type, session):
 
             if journey!=None and 'route_summary' in journey:
                 time = journey['route_summary']['total_time']/60/60
+                # print(f'Start: {start}, End: {end}, Time: {time}')
                 return [time]
             elif journey!=None and 'API limit(s) exceeded' in journey['message']:
                 print('API Limit Exceed')
-                await asyncio.sleep(5)
+                await asyncio.sleep(2)
             elif journey!=None and journey['status']=='error':
                 try:
                     error_json = json.loads(html.unescape(journey['message']))
@@ -99,7 +100,7 @@ def resolve_cost_vectors(azimuth, costs):
 
     return cost_vectors
 
-def update_points(search_locations, azimuth, step=1*1000):
+def update_points(search_locations, azimuth, step=0.5*1000):
     geodesic = pyproj.Geod(ellps='WGS84')
     lons, lats, back_azimuth = geodesic.fwd(
         lats=search_locations[:,0],
@@ -162,9 +163,9 @@ async def async_optimise_step(locations, search_locations):
     cost_vectors = resolve_cost_vectors(fwd_azimuth, costs)
     
     resultant_cost_vectors = np.array([np.sum(cost_vectors[np.all(expand_search_array==val, axis=1)],axis=0) for val in search_locations])
-    print(resultant_cost_vectors)
+    
     resultant_azimuth = np.degrees(np.arctan2(resultant_cost_vectors[:,1], resultant_cost_vectors[:,0])).reshape(-1,1)
-    print(resultant_azimuth)
+    
     updated_search_location = update_points(search_locations, resultant_azimuth)
 
     total_costs = np.power(resultant_cost_vectors, 2)
@@ -173,9 +174,9 @@ async def async_optimise_step(locations, search_locations):
 
     total_time = travel_time * travel_frequency
     total_time = np.array([np.sum(total_time[np.all(expand_search_array==val, axis=1)],axis=0) for val in search_locations])
-    print(total_time)
+    total_time = total_time.flatten()
 
-    return updated_search_location, total_costs, total_time
+    return search_locations, total_time, total_costs, updated_search_location
 
 
 def async_optimise(locations, iterations=10, num_points=1):
@@ -184,19 +185,27 @@ def async_optimise(locations, iterations=10, num_points=1):
 
     results = {'coor': [], 'total_cost': [], 'total_time': []}
     for iter in range(iterations):
-        
-        loop = asyncio.get_event_loop()
-        search_locations, total_costs, total_time = loop.run_until_complete(async_optimise_step(locations, search_locations))
-        if len(search_locations)==0:
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError as ex:
+            if "There is no current event loop in thread" in str(ex):
+                loop = asyncio.new_event_loop()
+
+        search_locations, total_costs, total_time, updated_locations = loop.run_until_complete(async_optimise_step(locations, search_locations))
+        if len(updated_locations)==0:
             break
 
         results['coor']+=search_locations.tolist()
         results['total_cost']+=total_costs.tolist()
         results['total_time']+=total_time.tolist()
+
+        search_locations = updated_locations
     
     print(results)
     # TODO: Get best results
-    return search_locations, results
+    best_idx = np.argmin(results['total_time'])
+    best_location = results['coor'][best_idx]
+    return best_location, results
 
         
 
@@ -204,15 +213,15 @@ def async_optimise(locations, iterations=10, num_points=1):
 if __name__=='__main__':
     locations = [
         # Changi Airport
-        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 7, 'travel_type': 'drive'},
+        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 1, 'travel_type': 'drive'},
         # Murai Camp
-        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 7, 'travel_type': 'drive'},
+        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 1, 'travel_type': 'drive'},
         # Clarke Quay
         {'coor': [1.2929040296020744, 103.84729261914465], 'freq': 1, 'travel_type': 'drive'}
     ]
     import time 
     start = time.time()
-    async_optimise(locations, iterations=10, num_points=4)
+    async_optimise(locations, iterations=10, num_points=2)
     end = time.time()
 
     print(f'Time taken:{end-start}')
