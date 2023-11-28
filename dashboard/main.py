@@ -5,26 +5,12 @@ import folium
 # Delete it or adapt it as necessary.
 # Documentation is available at https://streamsync.cloud
 
-# Shows in the log when the app starts
-print("Hello world!")
 
 # Its name starts with _, so this function won't be exposed
 def _update_message(state, map):
-    is_even = state["counter"] % 2 == 0
-    message = ("+Even" if is_even else "-Odd")
-    state["message"] = message
     state['map_html'] = map._repr_html_()
     state['map'] = map
 
-def decrement(state):
-    state["counter"] -= 1
-    _update_message(state)
-
-def increment(state):
-    state["counter"] += 1
-    # Shows in the log when the event handler is run
-    print(f"The counter has been incremented.")
-    _update_message(state)
     
 # Initialise the state
 
@@ -32,12 +18,18 @@ def increment(state):
 # because it starts with an underscore
 
 def generate_map():
-    m = folium.Map(location=(45.5236, -122.6750))
+
+    m = folium.Map(
+        location=(1.3674754117016408, 103.81093951150724), 
+        zoom_start=11,
+        min_zoom=11,
+    )
     m.add_child(folium.ClickForMarker())
     return m
 
 def place_marker_1(state):
     map = state['map']
+    
     folium.Marker(
         location=[45.5236, -122.6750],
         tooltip="Click me!",
@@ -48,26 +40,12 @@ def place_marker_1(state):
     state['map'] = map
     print('Clicked')
 
-def place_marker_2(state):
-    map = state['map']
-    folium.Marker(
-        location=[45.6000, -122.6750],
-        tooltip="Click me!",
-        popup="Mt. Hood Meadows",
-        icon=folium.Icon(icon="cloud"),
-    ).add_to(map)
-    state['map_html'] = map._repr_html_()
-    state['map'] = map
+def get_marker_coor(state, payload):
     print('Clicked')
 
 
-
 initial_state = ss.init_state({
-    "my_app": {
-        "title": "My App"
-    },
-    "_my_private_element": 1337,
-    "message": None,
-    "counter": 26
+    "initial_point": [1.3674754117016408, 103.81093951150724]
 })
+
 _update_message(initial_state, generate_map())
