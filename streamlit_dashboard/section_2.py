@@ -8,8 +8,8 @@ import math
 import ast
 import sys
 sys.path.append('./')
-from streamlit_dashboard.utils import generate_map, get_route
-from return_nearby_amenities import valid_amenities
+from streamlit_dashboard.utils import generate_map, get_route, get_amenities
+from data.return_nearby_amenities import valid_amenities
 
 def section_2():
 
@@ -85,6 +85,8 @@ def section_2():
 
     filter_properties = filter_properties[filter_properties[['latitude', 'longitude']].apply(list, axis=1).isin(to_display_lat_lng[['latitude', 'longitude']].values.tolist())]
 
+
+    amenities = get_amenities(filter_properties['id'], st.session_state['selected_amenities'])
     nearby_amenities = {}
     for amenity in st.session_state['selected_amenities']:
         nearby_amenities[amenity] = set()

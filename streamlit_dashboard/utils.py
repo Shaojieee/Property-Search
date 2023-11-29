@@ -24,6 +24,43 @@ def generate_map():
     return m
 
 
+def add_to_frequently_visited(name, address, travel_type_str, frequency):
+    if name=='':
+        name = f'Location {len(st.session_state["search_locations"])+1}'
+    if travel_type_str=='Drive':
+        travel_type='drive'
+    elif travel_type_str=='Public Transport':
+        travel_type='pt'
+    elif travel_type_str=='Walk':
+        travel_type='walk'
+    st.session_state['search_locations'].append({'selected': False, 'name': name, 'coor': address, 'freq': frequency, 'travel_type': travel_type, 'travel_type_str':travel_type_str})
+
+
+def search_address(search):
+    client = OneMapClient('', '')
+    results = client.search(search)
+    if results is None or 'error' in results:
+        return []
+    else:
+        return results['results']
+
+
+def optimise(run_async=True):
+
+    st.session_state['locations'] = st.session_state['search_locations']
+    if run_async:
+        best_location, results = async_op.async_optimise(st.session_state['locations'], iterations=5, num_points=4)
+    else:
+        best_location, results = op.optimise(st.session_state['locations'])  
+    st.session_state['best_location'] = [best_location]
+    
+    st.session_state['properties'] = get_properties(best_location, num_properties=1000)
+
+    st.session_state['properties'] = st.session_state['properties'].sort_values(by=['distance'], ascending=True)
+
+    log_optimisation_run()
+
+
 def log_optimisation_run():
     try:
         conn = psycopg2.connect(
@@ -54,47 +91,6 @@ def log_optimisation_run():
     except psycopg2.OperationalError as ex:
         if 'Connection refused' not in str(ex):
             print(ex)
-
-
-
-def optimise(run_async=True):
-
-    st.session_state['locations'] = st.session_state['search_locations']
-    if run_async:
-        best_location, results = async_op.async_optimise(st.session_state['locations'], iterations=5, num_points=4)
-    else:
-        best_location, results = op.optimise(st.session_state['locations'])  
-    st.session_state['best_location'] = [best_location]
-    
-    st.session_state['properties'] = op.get_properties_distance(best_location, './final.csv')
-
-    st.session_state['properties'] = st.session_state['properties'][st.session_state['properties']['distance']<5000]
-
-    st.session_state['properties'] = st.session_state['properties'].sort_values(by=['distance'], ascending=True)
-
-    log_optimisation_run()
-
-
-
-def add_to_frequently_visited(name, address, travel_type_str, frequency):
-    if name=='':
-        name = f'Location {len(st.session_state["search_locations"])+1}'
-    if travel_type_str=='Drive':
-        travel_type='drive'
-    elif travel_type_str=='Public Transport':
-        travel_type='pt'
-    elif travel_type_str=='Walk':
-        travel_type='walk'
-    st.session_state['search_locations'].append({'selected': False, 'name': name, 'coor': address, 'freq': frequency, 'travel_type': travel_type, 'travel_type_str':travel_type_str})
-
-
-def search_address(search):
-    client = OneMapClient('', '')
-    results = client.search(search)
-    if results is None or 'error' in results:
-        return []
-    else:
-        return results['results']
 
 
 def get_route(
@@ -156,4 +152,63 @@ def get_route(
                 return resp
         except:
             print('Retrying')
-    
+
+
+def get_properties(best_location, num_properties=1000):
+    try:
+        conn = psycopg2.connect(
+            host=os.environ['POSTGRES_HOST'],
+            port=os.environ['POSTGRES_PORT'],
+            database=os.environ['OLAP_DB'],
+            user=os.environ['OLAP_USER'],
+            password=os.environ['OLAP_PASSWORD']
+        )
+
+        conn.autocommit = True
+        cursor = conn.cursor()
+        cursor.execute(f"""
+        SELECT 
+            *,
+            calculate_distance(latitude, longitude, {best_location[0]}, {best_location[1]}) as distance_km
+        FROM
+            public.properties
+        ORDER BY 
+            distance_km asc
+        LIMIT {num_properties}
+        """)
+
+        
+    except psycopg2.OperationalError as ex:
+        if 'Connection refused' not in str(ex):
+            print(ex)
+
+
+def get_amenities(property_id, amenity_types):
+    try:
+        conn = psycopg2.connect(
+            host=os.environ['POSTGRES_HOST'],
+            port=os.environ['POSTGRES_PORT'],
+            database=os.environ['OLAP_DB'],
+            user=os.environ['OLAP_USER'],
+            password=os.environ['OLAP_PASSWORD']
+        )
+
+        conn.autocommit = True
+        cursor = conn.cursor()
+        cursor.execute(f"""
+        SELECT 
+            *,
+        FROM
+            public.property_amenities
+        WHERE 
+            amenity_type IN ({','.join(amenity_types)})
+        AND 
+            property_id={property_id}
+        ORDER BY 
+            distance_km asc
+        """)
+
+        
+    except psycopg2.OperationalError as ex:
+        if 'Connection refused' not in str(ex):
+            print(ex)
