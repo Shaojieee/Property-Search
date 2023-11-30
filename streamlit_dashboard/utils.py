@@ -49,7 +49,9 @@ def search_address(search):
 def optimise(run_async=True):
 
     st.session_state['locations'] = st.session_state['search_locations']
-    if run_async:
+    if len(st.session_state['locations'])==1:
+        best_location = st.session_state['locations'][0]['coor']
+    elif run_async:
         best_location, results = async_op.async_optimise(st.session_state['locations'], iterations=5, num_points=4)
     else:
         best_location, results = op.optimise(st.session_state['locations'])  
@@ -99,7 +101,7 @@ def get_route(
         lat2, long2,
         travel_type
 ):  
-    while True:
+    for i in range(10):
         try:
             input_key = tuple([lat1, long1, lat2, long2, travel_type])
             if 'property_route' not in st.session_state:
@@ -153,6 +155,7 @@ def get_route(
                 return resp
         except:
             print('Retrying')
+    return None
 
 
 def get_properties(best_location, num_properties=1000):

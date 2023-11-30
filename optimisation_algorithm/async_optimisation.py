@@ -46,35 +46,46 @@ def get_grid_points(mid_point, num_points):
 async def async_get_travelling_time(start, end, travel_type, session):
     while True:
         if travel_type=='pt':
-            journey = await Client.async_get_public_transport_route(
-                start, 
-                end, 
-                date='01-14-2023',
-                time='13:00:00',
-                mode='TRANSIT',
-                session=session
-            )
+            try:
+                journey = await Client.async_get_public_transport_route(
+                    start, 
+                    end, 
+                    date='01-14-2023',
+                    time='13:00:00',
+                    mode='TRANSIT',
+                    session=session
+                )
 
-            if journey!=None and'plan' in journey:
-                time = (journey['plan']['itineraries'][0]['walkTime'] + journey['plan']['itineraries'][0]['transitTime'])/60/60
-                return [time]
+                if journey!=None and'plan' in journey:
+                    time = (journey['plan']['itineraries'][0]['walkTime'] + journey['plan']['itineraries'][0]['transitTime'])/60/60
+                    return [time]
+            except Exception as e:
+                print('Error in getting pt route')
+                print(e)
         else:
-            journey = await Client.async_get_route(start, end, route_type=travel_type, session=session)
+            try:
+                journey = await Client.async_get_route(start, end, route_type=travel_type, session=session)
 
-            if journey!=None and 'route_summary' in journey:
-                time = journey['route_summary']['total_time']/60/60
-                # print(f'Start: {start}, End: {end}, Time: {time}')
-                return [time]
-            elif journey!=None and 'API limit(s) exceeded' in journey['message']:
-                print('API Limit Exceed')
-                await asyncio.sleep(2)
-            elif journey!=None and journey['status']=='error':
-                try:
-                    error_json = json.loads(html.unescape(journey['message']))
-                    if 'Unable to get drive route' in error_json['error']:
-                        return [-1]
-                except:
-                    print(journey)
+                if journey!=None and 'route_summary' in journey:
+                    time = journey['route_summary']['total_time']/60/60
+                    # print(f'Start: {start}, End: {end}, Time: {time}')
+                    return [time]
+                elif journey!=None and 'API limit(s) exceeded' in journey['message']:
+                    print('API Limit Exceed')
+                    await asyncio.sleep(2)
+                elif journey!=None and journey['status']=='error':
+                    try:
+                        # error_json = json.loads(html.unescape(journey['message']))
+                        # if 'Unable to get drive route' in error_json['error'] or 'Unable to get walk path' in error_json['error']:
+                        #     return [-1]
+                        if 'Unable to get drive route' in journey['message'] or 'Unable to get walk path' in journey['message']:
+                            print('Unable to get drive route')
+                            return [-1]
+                    except:
+                        print(journey)
+            except Exception as e:
+                print('Error in getting drive/walk route')
+                print(e)
                 
 
 def cost_fn(time, freq):
@@ -147,7 +158,7 @@ async def async_optimise_step(locations, search_locations):
     mask = travel_time!=[-1]
     mask = np.all(mask, axis=1)
     if ~np.any(mask):
-        return [], None, None
+        return [], [], [], []
     travel_frequency = travel_frequency[mask]
     travel_locations = travel_locations[mask]
     travel_type = travel_type[mask]
@@ -202,10 +213,12 @@ def async_optimise(locations, iterations=10, num_points=1):
         search_locations = updated_locations
     
     print(results)
-    # TODO: Get best results
-    best_idx = np.argmin(results['total_time'])
-    best_location = results['coor'][best_idx]
-    return best_location, results
+    if len(results['total_time'])==0:
+        return weighted_mid_point, results
+    else:
+        best_idx = np.argmin(results['total_time'])
+        best_location = results['coor'][best_idx]
+        return best_location, results
 
         
 
@@ -213,9 +226,9 @@ def async_optimise(locations, iterations=10, num_points=1):
 if __name__=='__main__':
     locations = [
         # Changi Airport
-        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 1, 'travel_type': 'drive'},
+        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 1, 'travel_type': 'pt'},
         # Murai Camp
-        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 1, 'travel_type': 'drive'},
+        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 1, 'travel_type': 'walk'},
         # Clarke Quay
         {'coor': [1.2929040296020744, 103.84729261914465], 'freq': 1, 'travel_type': 'drive'}
     ]
