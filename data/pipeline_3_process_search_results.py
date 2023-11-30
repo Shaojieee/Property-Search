@@ -88,7 +88,7 @@ def process_search_results(input_file, output_file, onemap_search_db=None):
         output_file=onemap_search_db
     ))
     
-    os.remove(onemap_search_phrase_temp_file)
+    
 
     listings['address'], \
     listings['road_name'], \
@@ -113,9 +113,11 @@ def process_search_results(input_file, output_file, onemap_search_db=None):
         output_file=onemap_search_db
     ))
 
+    os.remove(onemap_search_phrase_temp_file)
+
     with open(onemap_search_db, 'r') as f:
         search_db = json.load(f)
-
+        
     listings['address'], \
     listings['road_name'], \
     listings['building'], \
