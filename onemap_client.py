@@ -643,9 +643,10 @@ class OneMapClient():
                 'date': date,
                 'time': time,
                 'mode': mode,
-                'maxWalkDistance': max_walk_distance,
                 'numItineraries': num_itineraries
             }
+            if max_walk_distance!=None:
+                params['maxWalkDistance'] = max_walk_distance
             headers={
                 'Authorization': self.token
             }
