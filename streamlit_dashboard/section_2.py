@@ -133,16 +133,16 @@ def section_2():
             for location in st.session_state['locations']:
                 route_details = get_route(row['latitude'], row['longitude'], location['coor'][0], location['coor'][1], location['travel_type'])
                 # print(route_details)
-                
-                route = polyline.decode(route_details['route_geometry'])
+                if route_details is not None:
+                    route = polyline.decode(route_details['route_geometry'])
 
-                fg.add_child(
-                    folium.PolyLine(
-                        locations=route,
-                        weight=4,
-                        tooltip=f"Time: {int(route_details['total_time']/60)} mins"
+                    fg.add_child(
+                        folium.PolyLine(
+                            locations=route,
+                            weight=4,
+                            tooltip=f"Time: {int(route_details['total_time']/60)} mins"
+                        )
                     )
-                )
 
         
 
