@@ -14,5 +14,3 @@ python ./data/pipeline_first_time/4_upload_to_pg.py
 # Upload amenities 
 echo "Starting amenities pipeline"  
 python ./data/pipeline_update_amenities/overall_pipeline.py
-
-
