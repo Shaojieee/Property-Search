@@ -4,8 +4,6 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import sys
 sys.path.append('../../')
 
-import psycopg2
-
 from data.pipeline_update_amenities.pipeline_1_gathering_from_onemap import *
 from data.pipeline_update_amenities.pipeline_2_upload_to_postgres import upload_amenities
 from data.postgres_calculate_amenities import calculate_property_amenities, create_agg_property_table
@@ -14,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def overall_pipeline():
-    output_dir = '../amenities'
+    output_dir = './amenities'
     os.makedirs(output_dir, exist_ok=True)
 
     get_childcare(

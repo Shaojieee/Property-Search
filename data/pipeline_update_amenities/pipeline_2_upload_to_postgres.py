@@ -45,7 +45,7 @@ def upload_amenities(input_dir):
 
         df = df.drop_duplicates()
         execute_values(conn, df, 'amenities')
-        conn.close()
+    conn.close()
 
         
 

@@ -8,8 +8,7 @@ from dateutil import tz
 from data.pipeline_update_listings.pipeline_1_scrape_updated_search_results_page import scrape_latest_results
 from data.pipeline_update_listings.pipeline_2_extract_search_results import extract_listings
 from data.pipeline_update_listings.pipeline_3_process_search_results import process_search_results
-from data.pipeline_update_listings.pipeline_4_generate_amenities import generate_amenities
-from data.pipeline_update_listings.pipeline_5_upload_to_postgres import upsert_to_postgres
+from data.pipeline_update_listings.pipeline_4_upload_to_postgres import upsert_to_postgres
 from data.postgres_calculate_amenities import create_agg_property_table
 
 
@@ -50,22 +49,10 @@ def overall_pipeline():
         onemap_search_db=onemap_search_db
     )
 
-    # Step 4: Generate amenities for properties
-    generate_amenities(
-        input_file=processed_file,
-        output_amenities_file=amenities_file,
-        output_listings_file=processed_file_w_amenities,
-    )
-
-    # Step 5: Upsert data to postgres
+    # Step 4: Upsert property listings to postgres
     upsert_to_postgres(
         input_file=processed_file_w_amenities,
         table='properties'
-    )
-
-    upsert_to_postgres(
-        input_file=amenities_file,
-        table='property_amenities'
     )
 
     # Step 6: Update the aggregated table
