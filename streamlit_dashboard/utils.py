@@ -2,6 +2,7 @@ import folium
 import streamlit as st
 import polyline
 import psycopg2
+import pandas as pd
 
 import os
 import sys
@@ -56,7 +57,7 @@ def optimise(run_async=True):
     
     st.session_state['properties'] = get_properties(best_location, num_properties=1000)
 
-    st.session_state['properties'] = st.session_state['properties'].sort_values(by=['distance'], ascending=True)
+    st.session_state['properties'] = st.session_state['properties'].sort_values(by=['distance_km'], ascending=True)
 
     log_optimisation_run()
 
@@ -166,7 +167,7 @@ def get_properties(best_location, num_properties=1000):
 
         conn.autocommit = True
         cursor = conn.cursor()
-        cursor.execute(f"""
+        query = f"""
         SELECT 
             *,
             calculate_distance(latitude, longitude, {best_location[0]}, {best_location[1]}) as distance_km
@@ -175,15 +176,18 @@ def get_properties(best_location, num_properties=1000):
         ORDER BY 
             distance_km asc
         LIMIT {num_properties}
-        """)
+        """
 
-        
+        df = pd.read_sql_query(query, conn)
+        return df
+    
     except psycopg2.OperationalError as ex:
         if 'Connection refused' not in str(ex):
             print(ex)
 
 
-def get_amenities(property_id, amenity_types):
+def get_amenities(property_ids, amenity_types, num_amenities=5):
+    
     try:
         conn = psycopg2.connect(
             host=os.environ['POSTGRES_HOST'],
@@ -195,20 +199,30 @@ def get_amenities(property_id, amenity_types):
 
         conn.autocommit = True
         cursor = conn.cursor()
-        cursor.execute(f"""
+        amenity_types_str = "'" + "','".join(amenity_types) + "'"
+        property_ids_str = ','.join(property_ids.astype(str))
+        query = f"""
         SELECT 
-            *,
-        FROM
-            public.property_amenities
+            *
+        FROM 
+        (
+            SELECT 
+                *,
+                RANK() OVER (PARTITION BY amenity_type, property_id ORDER BY distance_km ASC) AS ranking
+            FROM
+                public.property_amenities 
+            where 
+                amenity_type IN ({amenity_types_str})
+            AND
+                property_id IN ({property_ids_str})
+        )
         WHERE 
-            amenity_type IN ({','.join(amenity_types)})
-        AND 
-            property_id={property_id}
-        ORDER BY 
-            distance_km asc
-        """)
+            ranking<={num_amenities}
+        """
 
-        
+        df = pd.read_sql_query(query, conn)
+        return df
+
     except psycopg2.OperationalError as ex:
         if 'Connection refused' not in str(ex):
             print(ex)

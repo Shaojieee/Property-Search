@@ -19,7 +19,6 @@ def section_2():
     if 'last_selected_lat_lng' not in st.session_state:
         st.session_state['last_selected_lat_lng'] = None
 
-
     st.header('Best Locations')
 
     filter_properties = st.session_state['properties']
@@ -77,26 +76,24 @@ def section_2():
 
         filter_properties = filter_properties[(filter_properties['price']>=st.session_state['selected_price_min']) & (filter_properties['price']<=st.session_state['selected_price_max'])]
         
-    
 
-
-    to_display_lat_lng = filter_properties.groupby(by=['latitude', 'longitude'])['distance'].max().reset_index()
-    to_display_lat_lng = to_display_lat_lng.sort_values(by=['distance'], ascending=True).head(5)
+    to_display_lat_lng = filter_properties.groupby(by=['latitude', 'longitude'])['distance_km'].max().reset_index()
+    to_display_lat_lng = to_display_lat_lng.sort_values(by=['distance_km'], ascending=True).head(5)
 
     filter_properties = filter_properties[filter_properties[['latitude', 'longitude']].apply(list, axis=1).isin(to_display_lat_lng[['latitude', 'longitude']].values.tolist())]
 
-
-    amenities = get_amenities(filter_properties['id'], st.session_state['selected_amenities'])
-    nearby_amenities = {}
-    for amenity in st.session_state['selected_amenities']:
-        nearby_amenities[amenity] = set()
-        for all_nearby in filter_properties[amenity]:
-            all_nearby = ast.literal_eval(all_nearby)
-            for nearby in all_nearby:
-                if amenity=='cycling_path':
-                    nearby_amenities[amenity].add(tuple([nearby['name'], tuple([tuple(x) for x in nearby['latlng']])]))
-                else:
-                    nearby_amenities[amenity].add(tuple([nearby['name'], nearby['lat'], nearby['long']]))
+    if len(st.session_state['selected_amenities'])>0:
+        amenities = get_amenities(filter_properties['id'], st.session_state['selected_amenities'])
+    # nearby_amenities = {}
+    # for amenity in st.session_state['selected_amenities']:
+    #     nearby_amenities[amenity] = set()
+    #     for all_nearby in filter_properties[amenity]:
+    #         all_nearby = ast.literal_eval(all_nearby)
+    #         for nearby in all_nearby:
+    #             if amenity=='cycling_path':
+    #                 nearby_amenities[amenity].add(tuple([nearby['name'], tuple([tuple(x) for x in nearby['latlng']])]))
+    #             else:
+    #                 nearby_amenities[amenity].add(tuple([nearby['name'], nearby['lat'], nearby['long']]))
 
     map = generate_map()
     fg = folium.FeatureGroup(name="fg")
@@ -121,25 +118,35 @@ def section_2():
 
     
     for amenity in st.session_state['selected_amenities']:
-        if amenity=='cycling_path':
-            for place in nearby_amenities[amenity]:
-                fg.add_child(
-                        folium.PolyLine(
-                            locations=place[1],
-                            tooltip=amenity,
-                            color='green'
-                        )
-                    )
-        else:
-            for place in nearby_amenities[amenity]:
-                fg.add_child(
-                    folium.Marker(
-                        location=(place[1], place[2]),
-                        popup='Search',
-                        tooltip=amenity,
-                        icon=folium.Icon(color='orange')
-                    )
+        selected_property_id = filter_properties[(filter_properties['latitude']==st.session_state['selected_lat_lng']['lat']) & (filter_properties['longitude']==st.session_state['selected_lat_lng']['lng'])]['id'].max()
+        nearby_amenities = amenities[(amenities['amenity_type']==amenity) & (amenities['property_id']==selected_property_id)]
+        for i,row in nearby_amenities.iterrows():
+            fg.add_child(
+                folium.Marker(
+                    location=(row['latitude'], row['longitude']),
+                    tooltip=row['amenity_name'],
+                    icon=folium.Icon(color='orange')
                 )
+            )
+        # if amenity=='cycling_path':
+        #     for i, row in nearby_amenities.iterrows():
+        #         fg.add_child(
+        #                 folium.PolyLine(
+        #                     locations=place[1],
+        #                     tooltip=amenity,
+        #                     color='green'
+        #                 )
+        #             )
+        # else:
+        #     for place in nearby_amenities[amenity]:
+        #         fg.add_child(
+        #             folium.Marker(
+        #                 location=(place[1], place[2]),
+        #                 popup='Search',
+        #                 tooltip=amenity,
+        #                 icon=folium.Icon(color='orange')
+        #             )
+        #         )
 
     
     for i, row in to_display_lat_lng.iterrows():
@@ -191,7 +198,7 @@ def section_2():
     if len(to_print_details)==0:
         st.markdown('#### Select a grey marker on the map to view listings!')
     if len(to_print_details)>0:
-        st.markdown('#### Below are the available listings at the green marker selected on the map!')
+        st.markdown('#### Below are the available listings on Property Guru at the green marker!')
         selection_col, detail_col = st.columns((1,3))
         
         names = []
