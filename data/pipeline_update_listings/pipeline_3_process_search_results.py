@@ -5,11 +5,9 @@ import pandas as pd
 import re
 
 import sys
-sys.path.append('../')
-from data.pipeline_3_process_address import onemap_search_addresses
+sys.path.append('../../')
+from data.property_guru_pipeline.pipeline_3_process_address import onemap_search_addresses
 
-import sys
-sys.path.append('../')
 import os
 from dotenv import load_dotenv
 import asyncio

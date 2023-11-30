@@ -1,23 +1,26 @@
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+import sys
+sys.path.append('../../')
+
 import datetime
 from dateutil import tz
-import os 
-import sys
-sys.path.append('../')
-from data.pipeline_1_scrape_updated_search_results_page import scrape_latest_results
-from data.pipeline_2_extract_search_results import extract_listings
-from data.pipeline_3_process_search_results import process_search_results
-from data.pipeline_4_generate_amenities import generate_amenities
-from data.pipeline_5_upload_to_postgres import upsert_to_postgres
+from data.pipeline_update_listings.pipeline_1_scrape_updated_search_results_page import scrape_latest_results
+from data.pipeline_update_listings.pipeline_2_extract_search_results import extract_listings
+from data.pipeline_update_listings.pipeline_3_process_search_results import process_search_results
+from data.pipeline_update_listings.pipeline_4_generate_amenities import generate_amenities
+from data.pipeline_update_listings.pipeline_5_upload_to_postgres import upsert_to_postgres
+from data.postgres_calculate_amenities import create_agg_property_table
 
 
 
 def overall_pipeline():
     cur_datetime = datetime.datetime.now(tz=tz.gettz('Asia/Singapore')).strftime('%Y%m%d%H%M')
-    unprocessed_dir = f'./data/raw/unprocessed/{cur_datetime}'
-    raw_processed_dir = f'./data/raw/processed/{cur_datetime}'
+    unprocessed_dir = f'../data/raw/unprocessed/{cur_datetime}'
+    raw_processed_dir = f'../data/raw/processed/{cur_datetime}'
     raw_processed_output_file = os.path.join(raw_processed_dir, 'raw_extracted.json')
 
-    processed_dir = f'./data/processed/{cur_datetime}'
+    processed_dir = f'../data/processed/{cur_datetime}'
     processed_file = os.path.join(processed_dir, 'processed.csv')
     amenities_file = os.path.join(processed_dir, 'property_amenities.csv')
     processed_file_w_amenities = os.path.join(processed_dir, 'processed_w_amenities.csv')
@@ -26,13 +29,13 @@ def overall_pipeline():
 
     
 
-    # Step 1: Scrape data
+    # Step 1: Scrape recent listings from property guru
     os.makedirs(unprocessed_dir, exist_ok=True)
     scrape_latest_results(
         output_dir=unprocessed_dir
     )
 
-    # Step 2: Extract information from raw html
+    # Step 2: Extract information from raw html file
     os.makedirs(raw_processed_dir, exist_ok=True)
     extract_listings(
         input_dir=unprocessed_dir,
@@ -47,15 +50,14 @@ def overall_pipeline():
         onemap_search_db=onemap_search_db
     )
 
-
-    # Step 4: Generate amenities
+    # Step 4: Generate amenities for properties
     generate_amenities(
         input_file=processed_file,
         output_amenities_file=amenities_file,
         output_listings_file=processed_file_w_amenities,
     )
 
-    # Step 5: Upload to postgres
+    # Step 5: Upsert data to postgres
     upsert_to_postgres(
         input_file=processed_file_w_amenities,
         table='properties'
@@ -66,6 +68,8 @@ def overall_pipeline():
         table='property_amenities'
     )
 
+    # Step 6: Update the aggregated table
+    create_agg_property_table()
     
 
 
