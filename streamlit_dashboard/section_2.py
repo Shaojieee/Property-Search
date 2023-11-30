@@ -5,7 +5,6 @@ import polyline
 from streamlit_option_menu import option_menu
 import math
 
-import ast
 import sys
 sys.path.append('./')
 from streamlit_dashboard.utils import generate_map, get_route, get_amenities
@@ -84,16 +83,6 @@ def section_2():
 
     if len(st.session_state['selected_amenities'])>0:
         amenities = get_amenities(filter_properties['id'], st.session_state['selected_amenities'])
-    # nearby_amenities = {}
-    # for amenity in st.session_state['selected_amenities']:
-    #     nearby_amenities[amenity] = set()
-    #     for all_nearby in filter_properties[amenity]:
-    #         all_nearby = ast.literal_eval(all_nearby)
-    #         for nearby in all_nearby:
-    #             if amenity=='cycling_path':
-    #                 nearby_amenities[amenity].add(tuple([nearby['name'], tuple([tuple(x) for x in nearby['latlng']])]))
-    #             else:
-    #                 nearby_amenities[amenity].add(tuple([nearby['name'], nearby['lat'], nearby['long']]))
 
     map = generate_map()
     fg = folium.FeatureGroup(name="fg")
@@ -128,25 +117,6 @@ def section_2():
                     icon=folium.Icon(color='orange')
                 )
             )
-        # if amenity=='cycling_path':
-        #     for i, row in nearby_amenities.iterrows():
-        #         fg.add_child(
-        #                 folium.PolyLine(
-        #                     locations=place[1],
-        #                     tooltip=amenity,
-        #                     color='green'
-        #                 )
-        #             )
-        # else:
-        #     for place in nearby_amenities[amenity]:
-        #         fg.add_child(
-        #             folium.Marker(
-        #                 location=(place[1], place[2]),
-        #                 popup='Search',
-        #                 tooltip=amenity,
-        #                 icon=folium.Icon(color='orange')
-        #             )
-        #         )
 
     
     for i, row in to_display_lat_lng.iterrows():
