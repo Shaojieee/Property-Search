@@ -168,14 +168,12 @@ def get_properties(best_location, num_properties=1000):
             password=os.environ['OLAP_PASSWORD']
         )
 
-        conn.autocommit = True
-        cursor = conn.cursor()
         query = f"""
         SELECT 
             *,
             calculate_distance(latitude, longitude, {best_location[0]}, {best_location[1]}) as distance_km
         FROM
-            public.properties
+            public.properties_w_amenities
         ORDER BY 
             distance_km asc
         LIMIT {num_properties}
@@ -188,8 +186,8 @@ def get_properties(best_location, num_properties=1000):
         if 'Connection refused' not in str(ex):
             print(ex)
 
-
-def get_amenities(property_ids, amenity_types, num_amenities=5):
+@st.cache_data
+def get_amenities(latitude, longitude, amenity_types, num_amenities=5):
     
     try:
         conn = psycopg2.connect(
@@ -200,10 +198,7 @@ def get_amenities(property_ids, amenity_types, num_amenities=5):
             password=os.environ['OLAP_PASSWORD']
         )
 
-        conn.autocommit = True
-        cursor = conn.cursor()
         amenity_types_str = "'" + "','".join(amenity_types) + "'"
-        property_ids_str = ','.join(property_ids.astype(str))
         query = f"""
         SELECT 
             *
@@ -211,13 +206,15 @@ def get_amenities(property_ids, amenity_types, num_amenities=5):
         (
             SELECT 
                 *,
-                RANK() OVER (PARTITION BY amenity_type, property_id ORDER BY distance_km ASC) AS ranking
+                RANK() OVER (PARTITION BY amenity_type ORDER BY distance_km ASC) AS ranking
             FROM
                 public.property_amenities 
             where 
                 amenity_type IN ({amenity_types_str})
             AND
-                property_id IN ({property_ids_str})
+                property_latitude={latitude}
+            AND 
+                property_longitude={longitude}
         )
         WHERE 
             ranking<={num_amenities}
