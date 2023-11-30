@@ -157,5 +157,3 @@ cython_debug/
 .streamlit/secrets.toml
 
 /postgres/postgres-data
-
-/pipeline
