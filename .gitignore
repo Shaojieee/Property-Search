@@ -155,3 +155,7 @@ cython_debug/
 .DS_Store
 
 .streamlit/secrets.toml
+
+/postgres/postgres-data
+
+/pipeline

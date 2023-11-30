@@ -6,6 +6,7 @@ services:
     # build: .
     volumes:
       - ./pg-init-scripts:/docker-entrypoint-initdb.d
+      - ./postgres-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_MULTIPLE_DATABASES= oltp,olap
       - POSTGRES_USER=${POSTGRES_USER}
