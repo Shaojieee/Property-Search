@@ -4,7 +4,7 @@ import streamlit as st
 st.header('Navigating Your Way to Home Bliss')
 
 st.markdown("""
-Welcome to [Your App Name], your go-to solution for finding 
+Welcome to TravelEase Dwellings, your go-to solution for finding 
 the most convenient location to stay when looking for a new home. 
 \n
 Designed as a valuable complement to the [Property Guru](https://www.propertyguru.com.sg/), 

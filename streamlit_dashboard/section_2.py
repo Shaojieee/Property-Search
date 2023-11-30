@@ -81,8 +81,11 @@ def section_2():
 
     filter_properties = filter_properties[filter_properties[['latitude', 'longitude']].apply(list, axis=1).isin(to_display_lat_lng[['latitude', 'longitude']].values.tolist())]
 
-    if len(st.session_state['selected_amenities'])>0:
-        amenities = get_amenities(filter_properties['id'], st.session_state['selected_amenities'])
+    if st.session_state['selected_lat_lng']!=None:
+        amenities = get_amenities(
+            latitude=st.session_state['selected_lat_lng']['lat'],
+            longitude=st.session_state['selected_lat_lng']['lng'],
+            amenity_types=st.session_state['selected_amenities'])
 
     map = generate_map()
     fg = folium.FeatureGroup(name="fg")
@@ -105,18 +108,17 @@ def section_2():
             )
         )
 
-    
-    for amenity in st.session_state['selected_amenities']:
-        selected_property_id = filter_properties[(filter_properties['latitude']==st.session_state['selected_lat_lng']['lat']) & (filter_properties['longitude']==st.session_state['selected_lat_lng']['lng'])]['id'].max()
-        nearby_amenities = amenities[(amenities['amenity_type']==amenity) & (amenities['property_id']==selected_property_id)]
-        for i,row in nearby_amenities.iterrows():
-            fg.add_child(
-                folium.Marker(
-                    location=(row['latitude'], row['longitude']),
-                    tooltip=row['amenity_name'],
-                    icon=folium.Icon(color='orange')
+    if st.session_state['selected_lat_lng']!=None:
+        for amenity in st.session_state['selected_amenities']:
+            nearby_amenities = amenities[(amenities['amenity_type']==amenity)]
+            for i,row in nearby_amenities.iterrows():
+                fg.add_child(
+                    folium.Marker(
+                        location=(row['amenity_latitude'], row['amenity_longitude']),
+                        tooltip=f"""{amenity}: {row['amenity_name']}""",
+                        icon=folium.Icon(color='orange')
+                    )
                 )
-            )
 
     
     for i, row in to_display_lat_lng.iterrows():
