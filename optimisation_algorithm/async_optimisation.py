@@ -25,7 +25,10 @@ token = Client.get_token(email, password)
 def get_mid_point(locations):
     coors = np.array([x['coor'] for x in locations])
     freq = np.array([x['freq'] for x in locations])
-    midpoint = np.average(coors, axis=0, weights=freq)
+    # Weighted
+    # midpoint = np.average(coors, axis=0, weights=freq)
+    # Unweighted
+    midpoint = np.average(coors, axis=0)
     return midpoint
 
  
@@ -206,7 +209,7 @@ def async_optimise(locations, iterations=10, num_points=1):
             if "There is no current event loop in thread" in str(ex):
                 loop = asyncio.new_event_loop()
 
-        search_locations, total_costs, total_time, updated_locations = loop.run_until_complete(async_optimise_step(locations, search_locations))
+        search_locations, total_time, total_costs, updated_locations = loop.run_until_complete(async_optimise_step(locations, search_locations))
         if len(updated_locations)==0:
             break
 
@@ -230,15 +233,15 @@ def async_optimise(locations, iterations=10, num_points=1):
 if __name__=='__main__':
     locations = [
         # Changi Airport
-        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 1, 'travel_type': 'drive'},
+        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 7, 'travel_type': 'pt'},
         # Murai Camp
-        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 1, 'travel_type': 'walk'},
+        {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 1, 'travel_type': 'drive'},
         # Clarke Quay
-        {'coor': [1.2929040296020744, 103.84729261914465], 'freq': 1, 'travel_type': 'drive'}
+        {'coor': [1.2929040296020744, 103.84729261914465], 'freq': 7, 'travel_type': 'pt'}
     ]
     import time 
     start = time.time()
-    async_optimise(locations, iterations=10, num_points=2)
+    async_optimise(locations, iterations=10, num_points=1)
     end = time.time()
 
     print(f'Time taken:{end-start}')
