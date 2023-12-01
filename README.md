@@ -54,7 +54,9 @@ Our data are stored in the `./data/data` folder.
 
 1. `./data/data/raw/unprocessed`
 
-    This folder is partitions by the time of information retrieval and consist of the raw html files that we obtain from Property Guru.
+    This folder is partitions by the time of information retrieval and consist of the raw html files that we obtain from Property Guru. 
+    
+    **_NOTE:_** We only keep a 20 out of 2,400 html files that we retrieve during the first mass retrieval from Property Guru. However, this data has been processed and the aggregated form can be found the folders mentioned below.
 
 2. `./data/data/raw/processed`
 
