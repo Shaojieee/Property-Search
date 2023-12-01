@@ -6,9 +6,9 @@
 2. Install Docker Engine and Docker Compose
 3. Register an OneMap account to access the API endpoints 
 
-## Initialisation
+## Initialisation (Tested on MacOS)
 
-1. Run the following command to initialise the PostgreSQL database and load data into into the database. This will take approximately 10 mins as we are writing large amounts of data into database.
+1. Run the following command to initialise the PostgreSQL database and load data into into the database. This will take approximately 10 mins as we are writing large amounts of data into database. Also do ensure that the PostgreSQL
 
     ```
     chmod +x initialise.sh
@@ -30,7 +30,7 @@
     ```
 
 ## Pipelines
-Under the `./data` folder, there are 3 subfolders for 3 different pipelines.
+Under the `./data` folder, there are 3 subfolders for 3 different pipelines. Please ensure that the PostgreSQL database is properly set up and running before running any of the pipelines.
 
 1. `./data/pipeline_first_time`
     
