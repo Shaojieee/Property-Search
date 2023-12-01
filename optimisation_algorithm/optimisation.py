@@ -1,14 +1,14 @@
 import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 import sys
-sys.path.append(os.path.join(os.getcwd(), os.pardir))
+sys.path.append('../')
 
 import pandas as pd
 import numpy as np
 from onemap_client import OneMapClient
 import pyproj
 
-import asyncio
-import aiohttp
 from dotenv import load_dotenv
 load_dotenv()
 

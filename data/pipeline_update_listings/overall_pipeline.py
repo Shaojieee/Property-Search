@@ -9,7 +9,7 @@ from data.pipeline_update_listings.pipeline_1_scrape_updated_search_results_page
 from data.pipeline_update_listings.pipeline_2_extract_search_results import extract_listings
 from data.pipeline_update_listings.pipeline_3_process_search_results import process_search_results
 from data.pipeline_update_listings.pipeline_4_upload_to_postgres import upsert_to_postgres
-from data.postgres_calculate_amenities import create_agg_property_table
+from data.postgres_calculate_amenities import create_agg_property_table, calculate_property_amenities
 
 
 
@@ -55,7 +55,8 @@ def overall_pipeline():
         table='properties'
     )
 
-    # Step 6: Update the aggregated table
+    # Step 5: Upsert to postgres
+    calculate_property_amenities()
     create_agg_property_table()
     
 

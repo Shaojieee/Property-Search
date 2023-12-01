@@ -7,6 +7,9 @@ import psycopg2.extras as extras
 import pandas as pd
 from data.return_nearby_amenities import valid_amenities
 
+from dotenv import load_dotenv
+load_dotenv()
+
 def upload_amenities(input_dir):
     table = 'amenities'
 

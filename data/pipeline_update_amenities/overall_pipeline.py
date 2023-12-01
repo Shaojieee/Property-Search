@@ -15,6 +15,7 @@ def overall_pipeline():
     output_dir = './amenities'
     os.makedirs(output_dir, exist_ok=True)
 
+    # Get amenities
     get_childcare(
         output_dir=output_dir
     )
@@ -67,14 +68,13 @@ def overall_pipeline():
         output_dir=output_dir
     )
 
-    
+    # Upload amenities to postgres
     upload_amenities(
         input_dir=output_dir
     )
 
-
+    # Calculate nearby amenities
     calculate_property_amenities()
-
     create_agg_property_table()
 
 

@@ -1,6 +1,8 @@
 import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 import sys
-sys.path.append(os.path.join(os.getcwd(), os.pardir))
+sys.path.append('../')
 
 import pandas as pd
 import numpy as np
@@ -59,6 +61,8 @@ async def async_get_travelling_time(start, end, travel_type, session):
                 if journey!=None and'plan' in journey:
                     time = (journey['plan']['itineraries'][0]['walkTime'] + journey['plan']['itineraries'][0]['transitTime'])/60/60
                     return [time]
+                else:
+                    print(journey)
             except Exception as e:
                 print('Error in getting pt route')
                 print(e)
@@ -226,7 +230,7 @@ def async_optimise(locations, iterations=10, num_points=1):
 if __name__=='__main__':
     locations = [
         # Changi Airport
-        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 1, 'travel_type': 'pt'},
+        {'coor': [1.334961708552094, 103.96292017145929], 'freq': 1, 'travel_type': 'drive'},
         # Murai Camp
         {'coor': [1.3869972483354562, 103.70085045003314], 'freq': 1, 'travel_type': 'walk'},
         # Clarke Quay

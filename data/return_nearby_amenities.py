@@ -58,61 +58,61 @@ def search_nearby_amenities(lat1,long1,type='childcare',threshold=3):
     
     nearby_results = []
     existing_lat_longs = set()
-    with open(f'./amenities/{type}_coords.json','r') as f:
+    with open(f'../amenities/{type}_coords.json','r') as f:
         locations_coord = json.load(f)
-    if type == 'cycling_path':
-        for coord_list in locations_coord['results']:
-            # check if any point along cycling path is within threshold distance
-            lats_lons = np.array(coord_list['latlng'])
-            lons2 = lats_lons[:,1]
-            lats2 = lats_lons[:,0]
+    # if type == 'cycling_path':
+    #     for coord_list in locations_coord['results']:
+    #         # check if any point along cycling path is within threshold distance
+    #         lats_lons = np.array(coord_list['latlng'])
+    #         lons2 = lats_lons[:,1]
+    #         lats2 = lats_lons[:,0]
 
-            lons1 = np.array([long1] * len(lons2))
-            lats1 = np.array([lat1] * len(lats2))
+    #         lons1 = np.array([long1] * len(lons2))
+    #         lats1 = np.array([lat1] * len(lats2))
 
-            geodesic = pyproj.Geod(ellps='WGS84')
-            fwd_azimuth, back_azimuth, distance_m = geodesic.inv(
-                lons1=lons1,
-                lats1=lats1,
-                lons2=lons2,
-                lats2=lats2,
-            )
+    #         geodesic = pyproj.Geod(ellps='WGS84')
+    #         fwd_azimuth, back_azimuth, distance_m = geodesic.inv(
+    #             lons1=lons1,
+    #             lats1=lats1,
+    #             lons2=lons2,
+    #             lats2=lats2,
+    #         )
             
-            min_idx = np.argmin(distance_m)
-            if distance_m[min_idx]<=threshold*1000:
-                coord_list['distance_km'] = distance_m[min_idx]/1000.0
-                coord_list['lat'] = lats2[min_idx]
-                coord_list['long'] = lons2[min_idx]
-                to_add = tuple([coord_list['lat'], coord_list['long']])
-                if to_add not in existing_lat_longs:
-                    nearby_results.append(coord_list)
-                    existing_lat_longs.add(to_add)
+    #         min_idx = np.argmin(distance_m)
+    #         if distance_m[min_idx]<=threshold*1000:
+    #             coord_list['distance_km'] = distance_m[min_idx]/1000.0
+    #             coord_list['lat'] = lats2[min_idx]
+    #             coord_list['long'] = lons2[min_idx]
+    #             to_add = tuple([coord_list['lat'], coord_list['long']])
+    #             if to_add not in existing_lat_longs:
+    #                 nearby_results.append(coord_list)
+    #                 existing_lat_longs.add(to_add)
             
-    else:
+    # else:
 
-        lons2 = np.array([coord['long'] for coord in locations_coord['results']])
-        lats2 = np.array([coord['lat'] for coord in locations_coord['results']])
+    lons2 = np.array([coord['long'] for coord in locations_coord['results']])
+    lats2 = np.array([coord['lat'] for coord in locations_coord['results']])
 
-        lons1 = np.array([long1] * len(lons2))
-        lats1 = np.array([lat1] * len(lats2))
-        geodesic = pyproj.Geod(ellps='WGS84')
-        fwd_azimuth, back_azimuth, distance_m = geodesic.inv(
-            lons1=lons1,
-            lats1=lats1,
-            lons2=lons2,
-            lats2=lats2,
-        )
-        
-        distance_km = distance_m / 1000.0
+    lons1 = np.array([long1] * len(lons2))
+    lats1 = np.array([lat1] * len(lats2))
+    geodesic = pyproj.Geod(ellps='WGS84')
+    fwd_azimuth, back_azimuth, distance_m = geodesic.inv(
+        lons1=lons1,
+        lats1=lats1,
+        lons2=lons2,
+        lats2=lats2,
+    )
+    
+    distance_km = distance_m / 1000.0
 
-        nearby_results = []
-        for i in range(len(locations_coord['results'])):
-            coord = locations_coord['results'][i]
-            coord['distance_km'] = distance_km[i]
-            if distance_km[i] <= threshold:
-                to_add = tuple([coord['lat'], coord['long']])
-                if to_add not in existing_lat_longs:
-                    nearby_results.append(coord)
-                    existing_lat_longs.add(to_add)
+    nearby_results = []
+    for i in range(len(locations_coord['results'])):
+        coord = locations_coord['results'][i]
+        coord['distance_km'] = distance_km[i]
+        if distance_km[i] <= threshold:
+            to_add = tuple([coord['lat'], coord['long']])
+            if to_add not in existing_lat_longs:
+                nearby_results.append(coord)
+                existing_lat_longs.add(to_add)
     
     return nearby_results
