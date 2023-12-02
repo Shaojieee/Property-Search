@@ -6,7 +6,7 @@ import re
 
 import sys
 sys.path.append('../../')
-from data.property_guru_pipeline.pipeline_3_process_address import onemap_search_addresses
+from data.pipeline_update_listings.pipeline_3_process_address import onemap_search_addresses
 
 import os
 from dotenv import load_dotenv

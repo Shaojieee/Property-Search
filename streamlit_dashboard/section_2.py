@@ -80,8 +80,8 @@ def section_2():
     to_display_lat_lng = to_display_lat_lng.sort_values(by=['distance_km'], ascending=True).head(5)
 
     filter_properties = filter_properties[filter_properties[['latitude', 'longitude']].apply(list, axis=1).isin(to_display_lat_lng[['latitude', 'longitude']].values.tolist())]
-
-    if st.session_state['selected_lat_lng']!=None:
+    
+    if st.session_state['selected_lat_lng']!=None and st.session_state['selected_lat_lng']['lat']!=None:
         amenities = get_amenities(
             latitude=st.session_state['selected_lat_lng']['lat'],
             longitude=st.session_state['selected_lat_lng']['lng'],

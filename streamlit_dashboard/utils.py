@@ -186,7 +186,7 @@ def get_properties(best_location, num_properties=1000):
         if 'Connection refused' not in str(ex):
             print(ex)
 
-@st.cache_data
+
 def get_amenities(latitude, longitude, amenity_types, num_amenities=5):
     
     try:

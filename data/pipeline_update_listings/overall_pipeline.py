@@ -15,15 +15,12 @@ from data.postgres_calculate_amenities import create_agg_property_table, calcula
 
 def overall_pipeline():
     cur_datetime = datetime.datetime.now(tz=tz.gettz('Asia/Singapore')).strftime('%Y%m%d%H%M')
-    unprocessed_dir = f'../data/raw/unprocessed/{cur_datetime}'
-    raw_processed_dir = f'../data/raw/processed/{cur_datetime}'
+    unprocessed_dir = f'./data/raw/unprocessed/{cur_datetime}'
+    raw_processed_dir = f'./data/raw/processed/{cur_datetime}'
     raw_processed_output_file = os.path.join(raw_processed_dir, 'raw_extracted.json')
 
-    processed_dir = f'../data/processed/{cur_datetime}'
+    processed_dir = f'./data/processed/{cur_datetime}'
     processed_file = os.path.join(processed_dir, 'processed.csv')
-    amenities_file = os.path.join(processed_dir, 'property_amenities.csv')
-    processed_file_w_amenities = os.path.join(processed_dir, 'processed_w_amenities.csv')
-
     onemap_search_db = './data/one_map_search_results_db.json'
 
     
@@ -51,11 +48,11 @@ def overall_pipeline():
 
     # Step 4: Upsert property listings to postgres
     upsert_to_postgres(
-        input_file=processed_file_w_amenities,
+        input_file=processed_file,
         table='properties'
     )
 
-    # Step 5: Upsert to postgres
+    # Step 5: Computation in Postgres
     calculate_property_amenities()
     create_agg_property_table()
     
